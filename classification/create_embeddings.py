@@ -28,7 +28,7 @@ for i in range(10):
 
 
 # save embeddings
-np.savez(epi=np.array(epitope_embeddings,) tcr=np.array(tcr_embeddings), binding=pairs['binding'])
+np.savez(epi=np.array(epitope_embeddings), tcr=np.array(tcr_embeddings), binding=pairs['binding'])
 
 
 
