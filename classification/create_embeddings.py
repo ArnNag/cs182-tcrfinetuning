@@ -1,5 +1,5 @@
 import pandas as pd
-from transformers import T5EncoderModel
+from transformers import T5EncoderModel, T5Tokenizer
 import numpy as np
 
 pairs = pd.read_csv('TCREpitopePairs.csv')
