@@ -8,6 +8,7 @@ epitope_embeddings = []
 tcr_embeddings = []
 
 
+print("loading models")
 tokenizer = T5Tokenizer.from_pretrained("Rostlab/prot_t5_xl_uniref50") 
 nonfinetuned_model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_uniref50")
 
@@ -27,8 +28,10 @@ def get_epitope_embedding(seq):
 # TODO: replace this with fine tuned model
 finetuned_model = nonfinetuned_model
 
+print("loaded models")
 # get embeddings for epitopes and TCR sequences
-for i in range(10):
+for i in range(3):
+    print(f"making embeddings for {i}")
     epitope_seq = pairs['epi'][i]
     epitope_embedding = get_epitope_embedding(epitope_seq)
 
@@ -40,5 +43,5 @@ for i in range(10):
 
 
 # save embeddings
-np.savez(epi=np.array(epitope_embeddings), tcr=np.array(tcr_embeddings), binding=pairs['binding'])
+np.savez("embeddings.npz", epi=np.array(epitope_embeddings), tcr=np.array(tcr_embeddings), binding=pairs['binding'])
 
