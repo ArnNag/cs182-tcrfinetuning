@@ -2,8 +2,9 @@ import pandas as pd
 from transformers import T5EncoderModel, T5Tokenizer
 import numpy as np
 from functools import lru_cache
+from tqdm import tqdm
 
-pairs = pd.read_csv('TCREpitopePairs.csv', nrows=10)
+pairs = pd.read_csv('TCREpitopePairs.csv')
 epitope_embeddings = []
 tcr_embeddings = []
 
@@ -30,8 +31,7 @@ finetuned_model = nonfinetuned_model
 
 print("loaded models")
 # get embeddings for epitopes and TCR sequences
-for i in range(3):
-    print(f"making embeddings for {i}")
+for i in tqdm(range(len(pairs))):
     epitope_seq = pairs['epi'][i]
     epitope_embedding = get_epitope_embedding(epitope_seq)
 
@@ -43,5 +43,5 @@ for i in range(3):
 
 
 # save embeddings
-np.savez("embeddings.npz", epi=np.array(epitope_embeddings), tcr=np.array(tcr_embeddings), binding=pairs['binding'])
+np.savez("embeddings_no_finetuning.npz", epi=np.array(epitope_embeddings), tcr=np.array(tcr_embeddings), binding=pairs['binding'])
 
