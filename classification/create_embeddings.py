@@ -3,6 +3,7 @@ from transformers import T5EncoderModel, T5Tokenizer
 import numpy as np
 from functools import lru_cache
 from tqdm import tqdm
+import torch
 
 pairs = pd.read_csv('TCREpitopePairs.csv', nrows=3)
 pairs['epi'] = pairs.apply(lambda row : " ".join(row["epi"]), axis = 1)
@@ -17,9 +18,9 @@ nonfinetuned_model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_uniref50
 
 def get_embedding(seq, model):
     input_ids = tokenizer(seq, return_tensors="pt").input_ids
-    hidden_states = model.encoder(input_ids=input_ids).last_hidden_state.detach().numpy()
-    hidden_states_pooled = torch.mean(hidden_states[:-1], dim=1)
-    return hidden_states
+    hidden_states = model.encoder(input_ids=input_ids).last_hidden_state.detach()
+    hidden_states_pooled = torch.mean(hidden_states, dim=1)
+    return hidden_states_pooled
 
 @lru_cache(maxsize=4096)
 def get_tcr_embedding(seq):
