@@ -5,7 +5,7 @@ from functools import lru_cache
 from tqdm import tqdm
 import torch
 
-pairs = pd.read_csv('TCREpitopePairs.csv', nrows=3)
+pairs = pd.read_csv('TCREpitopePairs.csv')
 pairs['epi'] = pairs.apply(lambda row : " ".join(row["epi"]), axis = 1)
 pairs['tcr'] = pairs.apply(lambda row : " ".join(row["tcr"]), axis = 1)
 epitope_embeddings = []
@@ -19,7 +19,7 @@ nonfinetuned_model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_uniref50
 def get_embedding(seq, model):
     input_ids = tokenizer(seq, return_tensors="pt").input_ids
     hidden_states = model.encoder(input_ids=input_ids).last_hidden_state.detach()
-    hidden_states_pooled = torch.mean(hidden_states, dim=1)
+    hidden_states_pooled = torch.mean(hidden_states, dim=1).numpy()
     return hidden_states_pooled
 
 @lru_cache(maxsize=4096)
@@ -35,7 +35,7 @@ finetuned_model = nonfinetuned_model
 
 print("loaded models")
 # get embeddings for epitopes and TCR sequences
-for i in tqdm(range(3)):
+for i in tqdm(range(len(pairs))):
     epitope_seq = pairs['epi'][i]
     epitope_embedding = get_epitope_embedding(epitope_seq)
 
