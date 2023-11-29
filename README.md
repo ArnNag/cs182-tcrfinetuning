@@ -19,7 +19,7 @@ These commands are done for you in some of the figure-reproducing scripts
 The first section of the ProtT5_Embedding notebook (titled Output Fine-tuned Embeddings) generates the TCR embeddings from their amino acid sequences. The second section (titled Plot Fine-tuned Embeddings) contains the code necessary to reproduce the UMAP plots (Figure 2). Since the full dataset is very large, we provide a subset of the dataset
 
 ## Hierarchical Clustering Reproduction (Figure 3; left)
-To reproduce the left plot in Figure 3 (since the right plot is from the catELMo paper), run the clustering.ipynb notebook. 
+To reproduce the left plot in Figure 3 (since the right plot is from the catELMo paper), run the clustering.ipynb notebook. To download the embeddings used for this analysis, use the following dropbox link (in the form of a pickled list): https://www.dropbox.com/scl/fi/7qef6cb06fhozfvdzeuth/McPAS_Embeddings_FineTuned.pkl?rlkey=42r6knr7k4skw5ee0lz1l6eku&dl=0
 
 ## Fine-Tuning Procedure
 Our LoRA fine-tuning procedure is in prott5/Fine-Tuning/PT5_LoRA_TCR_pilot.ipynb. Our linear probing procedure is outlined in ProtT5_Embedding.ipynb. Although pre-training these yourself may take hours, these notebooks contain all the relevant information needed to reproduce Figure 1. 
