@@ -6,7 +6,6 @@ from tqdm import tqdm
 import torch
 import re
 
-pairs = pd.read_csv('TCREpitopePairs.csv')
 
 print("loading models")
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
@@ -41,7 +40,9 @@ def get_embeddings(sequences, batch_size):
     return features
 
 
-tcr_seqs = list(pairs["tcr"])
-tcr_embeddings = get_embeddings(tcr_seqs, int(2.5e3))
-np.save("tcr_embeddings_no_finetune.npy", np.array(tcr_embeddings))
+if __name__ == '__main__':
+    pairs = pd.read_csv('TCREpitopePairs.csv')
+    tcr_seqs = list(pairs["tcr"])
+    tcr_embeddings = get_embeddings(tcr_seqs, int(2.5e3))
+    np.save("tcr_embeddings_no_finetune.npy", np.array(tcr_embeddings))
 
