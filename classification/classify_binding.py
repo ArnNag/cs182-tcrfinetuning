@@ -13,6 +13,7 @@ from sklearn.model_selection import train_test_split
 pairs = pd.read_csv('TCREpitopePairs.csv')
 binding_labels = torch.tensor(pairs["binding"], dtype=torch.float)
 epitope_embeddings = np.load("embeddings_epitope_no_finetuning_duplicated.npy")
+assert len(binding_labels) == len(epitope_embeddings)
 
 class BindingClassifier(nn.Module):
     def __init__(self, input_size_A=1024, input_size_B=1024, hidden_size_one=2048, hidden_size_two=1024):
@@ -51,12 +52,17 @@ class BindingClassifier(nn.Module):
 
         return output
 
-train_val_idxs, test_idxs = train_test_split(torch.arange(len(tcr_embeddings)), test_size=0.1, random_state=1984)
-train_idxs, val_idxs = train_test_split(torch.arange(len(tcr_embeddings)), test_size=0.111111, random_state=1984)
+train_val_idxs, test_idxs = train_test_split(torch.arange(len(binding_labels)), test_size=0.1, random_state=1984)
+train_idxs, val_idxs = train_test_split(torch.arange(len(binding_labels)), test_size=0.111111, random_state=1984)
+
+train_epitope_embeddings = epitope_embeddings[train_idxs]
+val_epitope_embeddings = epitope_embeddings[val_idxs]
+train_binding_labels = binding_labels[train_idxs]
+val_binding_labels = binding_labels[val_idxs]
+
 
 
 loss_fn = nn.BCELoss()
-optimizer = torch.optim.Adam(model.parameters())
 
 class PairDataset(Dataset):
 
@@ -67,24 +73,26 @@ class PairDataset(Dataset):
         self.binding_labels = binding_labels
 
     def __len__(self):
-        return len(epitope_embeddings)
+        return len(self.epitope_embeddings)
 
     def __getitem__(self, idx):
-        return (epitope_embeddings[idx], tcr_embeddings[idx]), binding_labels[idx]
+        return (self.epitope_embeddings[idx], self.tcr_embeddings[idx]), self.binding_labels[idx]
 
 def run_experiment(tcr_embedding_path):
-    model = BindingClassifier(input_size_A, input_size_B)
     tcr_embeddings = np.load(tcr_embedding_path)
 
     input_size_A = tcr_embeddings.shape[1] 
     input_size_B = epitope_embeddings.shape[1]
+
+    model = BindingClassifier(input_size_A, input_size_B)
+    optimizer = torch.optim.Adam(model.parameters())
     assert(len(tcr_embeddings) == len(epitope_embeddings))
 
             
-    training_data = PairDataset(epitope_embeddings[train_idxs], tcr_embeddings[train_idxs], binding_labels[train_idxs])
+    training_data = PairDataset(train_epitope_embeddings, tcr_embeddings[train_idxs], train_binding_labels)
     training_loader = DataLoader(training_data, batch_size=int(2.5e3), shuffle=True)
 
-    validation_data = PairDataset(epitope_embeddings[val_idxs], tcr_embeddings[val_idxs], binding_labels[val_idxs])
+    validation_data = PairDataset(val_epitope_embeddings, tcr_embeddings[val_idxs], val_binding_labels)
     validation_loader = DataLoader(training_data, batch_size=int(2.5e3), shuffle=True)
 
     def train_one_epoch(epoch_index, tb_writer):
@@ -172,8 +180,7 @@ def run_experiment(tcr_embedding_path):
         epoch_number += 1
 
 if __name__ == "__main__":
-    # model_names = ["Rostlab_prot_t5_xl_uniref50", "checkpoint-100000", "checkpoint-200000"]
-    model_names = ["Rostlab_prot_t5_xl_uniref50"]
+    model_names = ["Rostlab_prot_t5_xl_uniref50", "checkpoint-100000", "checkpoint-200000"]
     for name in model_names:
         tcr_embedding_path = f"tcr_embeddings_{name}.npy"
         run_experiment(tcr_embedding_path)
