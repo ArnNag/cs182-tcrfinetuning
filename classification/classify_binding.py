@@ -122,7 +122,7 @@ def run_experiment(tcr_embedding_path):
 
             # Gather data and report
             running_loss += loss.item()
-            if i % 1000 == 999:
+            if i % 10 == 9:
                 last_loss = running_loss / 1000 # loss per batch
                 print('  batch {} loss: {}'.format(i + 1, last_loss))
                 tb_x = epoch_index * len(training_loader) + i + 1
