@@ -52,13 +52,13 @@ class BindingClassifier(nn.Module):
 
         return output
 
-train_val_idxs, test_idxs = train_test_split(torch.arange(len(binding_labels)), test_size=0.1, random_state=1984)
-train_idxs, val_idxs = train_test_split(torch.arange(len(binding_labels)), test_size=0.111111, random_state=1984)
+train_idxs, val_idxs = train_test_split(torch.arange(len(binding_labels)), test_size=0.1, random_state=1984)
 
 train_epitope_embeddings = epitope_embeddings[train_idxs]
 val_epitope_embeddings = epitope_embeddings[val_idxs]
 train_binding_labels = binding_labels[train_idxs]
 val_binding_labels = binding_labels[val_idxs]
+np.save("val_binding_labels.npy", val_binding_labels.numpy())
 
 
 
@@ -78,7 +78,8 @@ class PairDataset(Dataset):
     def __getitem__(self, idx):
         return (self.epitope_embeddings[idx], self.tcr_embeddings[idx]), self.binding_labels[idx]
 
-def run_experiment(tcr_embedding_path):
+def run_experiment(model_name):
+    tcr_embedding_path = f"tcr_embeddings_{name}.npy"
     tcr_embeddings = np.load(tcr_embedding_path)
 
     input_size_A = tcr_embeddings.shape[1] 
@@ -132,10 +133,10 @@ def run_experiment(tcr_embedding_path):
         return last_loss
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    writer = SummaryWriter(f'runs/{tcr_embedding_path}/{timestamp}')
+    writer = SummaryWriter(f'runs/{model_name}/{timestamp}')
     epoch_number = 0
 
-    EPOCHS = 5
+    EPOCHS = 20
 
     best_vloss = 1_000_000.
 
@@ -147,21 +148,19 @@ def run_experiment(tcr_embedding_path):
         avg_loss = train_one_epoch(epoch_number, writer)
 
 
-        running_vloss = 0.0
         # Set the model to evaluation mode, disabling dropout and using population
         # statistics for batch normalization.
         model.eval()
 
         # Disable gradient computation and reduce memory consumption.
         with torch.no_grad():
-            for i, vdata in enumerate(validation_loader):
-                vinputs, vlabels = vdata
-                vlabels = vlabels.type(torch.float)
-                voutputs = model(*vinputs)
-                vloss = loss_fn(voutputs, vlabels)
-                running_vloss += vloss
+            vinputs, vlabels = validation_data[:]
+            vlabels = vlabels.type(torch.float)
+            voutputs = model(*vinputs)
+            vloss = loss_fn(voutputs, vlabels)
 
-        avg_vloss = running_vloss / (i + 1)
+        avg_vloss = vloss / len(validation_data)
+        np.save(f"{model_name}_epoch_{epoch}_{timestamp}_logits.npy", np.array(voutputs))
         print('LOSS train {} valid {}'.format(avg_loss, avg_vloss))
 
         # Log the running loss averaged per batch
@@ -174,13 +173,12 @@ def run_experiment(tcr_embedding_path):
         # Track best performance, and save the model's state
         if avg_vloss < best_vloss:
             best_vloss = avg_vloss
-            model_path = 'model_{}_{}_{}'.format(tcr_embedding_path, timestamp, epoch_number)
+            model_path = 'model_{}_{}_{}'.format(model_name, timestamp, epoch_number)
             torch.save(model.state_dict(), model_path)
 
         epoch_number += 1
 
 if __name__ == "__main__":
-    model_names = ["Rostlab_prot_t5_xl_uniref50", "checkpoint-100000", "checkpoint-200000"]
+    model_names = ["Rostlab_prot_t5_xl_uniref50", "checkpoint-100000", "checkpoint-200000", "checkpoint-300000"]
     for name in model_names:
-        tcr_embedding_path = f"tcr_embeddings_{name}.npy"
-        run_experiment(tcr_embedding_path)
+        run_experiment(name)
