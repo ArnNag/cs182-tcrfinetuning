@@ -159,9 +159,8 @@ def run_experiment(model_name):
             voutputs = model(*vinputs)
             vloss = loss_fn(voutputs, vlabels)
 
-        avg_vloss = vloss / len(validation_data)
         np.save(f"{model_name}_epoch_{epoch}_{timestamp}_logits.npy", np.array(voutputs))
-        print('LOSS train {} valid {}'.format(avg_loss, avg_vloss))
+        print('LOSS train {} valid {}'.format(avg_loss, vloss))
 
         # Log the running loss averaged per batch
         # for both training and validation
